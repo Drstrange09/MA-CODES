@@ -1,0 +1,79 @@
+ 
+section .data
+	msg1 db"Enter the string:",10
+	msg1_len equ $-msg1
+	msg2 db"Entered string is: "
+	msg2_len equ $-msg2
+	msg3 db"The length of string is: "
+	msg3_len equ $-msg3
+	msg4 db" ",10
+	msg4_len equ $-msg4
+ 
+section .bss
+	buffer resb 20
+	buffer_len equ $-buffer
+	char_ans resb 2
+ 
+%macro print 2
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, %1
+	mov rdx, %2
+	syscall
+%endmacro
+ 
+%macro read 2
+	mov rax, 0
+	mov rdi, 0
+	mov rsi, %1
+	mov rdx, %2
+	syscall
+%endmacro
+ 
+%macro exit 0
+	mov rax, 60
+	mov rdi, 0
+	syscall
+%endmacro
+ 
+section .text
+	global _start
+ 
+_start:
+ 
+	print msg1, msg1_len
+	read buffer, buffer_len
+	
+	call disp_proc
+	;dec rax
+ 
+	print msg2, msg2_len
+	print buffer, buffer_len
+ 
+	exit
+ 
+disp_proc:
+	mov rbx, 16
+	mov rcx, 2
+	mov rsi, char_ans+1
+ 
+cnt:
+	mov rdx, 0
+	div rbx
+	cmp dl, 09h
+	jbe add30
+	add dl, 07h
+ 
+add30:
+	add dl, 30h
+	mov [rsi], dl
+	dec rsi
+ 
+	dec rcx
+	jnz cnt
+ 
+	print msg3, msg3_len
+	print char_ans, 2
+	print msg4, msg4_len
+ 
+	ret
