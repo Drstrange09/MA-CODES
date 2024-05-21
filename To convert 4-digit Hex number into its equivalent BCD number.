@@ -1,0 +1,119 @@
+section .data
+	hmsg db 10,"Enter 4 digit HEX number : "
+	hmsg_len equ $-hmsg
+ 
+	ebmsg db 10,"Equivalent BCD number : "
+	ebmsg_len equ $-ebmsg
+ 
+	ermsg db 10,"Enter valid HEX number !!" ,10
+	ermsg_len equ $-ermsg
+	
+section .bss
+	buf resb 5
+	char_ans resb 1
+ 
+%macro print 2
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, %1
+	mov rdx, %2
+	syscall
+%endmacro
+ 
+%macro read 2
+	mov rax, 0
+	mov rdi, 0
+	mov rsi, %1
+	mov rdx, %2
+	syscall
+%endmacro
+ 
+%macro exit 0
+	mov rax, 60
+	mov rdi, 0
+	syscall
+%endmacro
+ 
+section .text
+	global _start
+ 
+_start:
+ 
+call Hex_BCD
+ 
+exit
+ 
+Hex_BCD:
+	print hmsg, hmsg_len
+	call accept
+ 
+	mov ax, bx
+	mov bx, 10
+	xor bp, bp
+ 
+back:
+	xor dx, dx
+	div bx
+	push dx
+	inc bp
+ 
+	cmp ax, 0
+	jne back
+ 
+	print ebmsg, ebmsg_len
+ 
+back1:
+	pop dx
+	add dl, 30h
+ 
+	mov[char_ans], dl
+	print char_ans, 1
+ 
+	dec bp
+	jnz back1
+ 
+accept:
+	read buf, 5
+	
+	mov rcx, 4
+	mov rsi, buf
+	xor bx, bx
+ 
+next_byte:
+	shl bx,4
+	mov al, [rsi]
+	
+	cmp al,'0'
+	jb error
+	cmp al, '9'
+	jbe sub30
+ 
+	cmp al, 'A'
+	jb error
+	cmp al, 'F'
+	jbe sub37
+ 
+	cmp al, 'a'
+	jb error
+	cmp al, 'f'
+	jbe sub57
+ 
+sub57:
+	sub al,20h
+ 
+sub37:
+	sub al,07h
+	
+sub30:
+	sub al,30h
+ 
+	add bx, ax
+	inc rsi
+	dec rcx
+	jnz next_byte
+	ret
+ 
+error:
+	print ermsg, ermsg_len	
+ 
+	exit
