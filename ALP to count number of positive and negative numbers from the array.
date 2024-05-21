@@ -1,0 +1,96 @@
+section .data
+	arr64 dq -111H, 222H, 333H, -444H, 777H, 666H
+	n equ 6
+	pmsg db 10,"The no. of positive elements from 64_bit array : "
+	pmsg_len equ $-pmsg
+	nmsg db 10,"The no. of negative elements from 64_bit array : "
+	nmsg_len equ $-nmsg
+	
+section .bss
+	p_cnt resq 1
+	n_cnt resq 1
+	char_ans resb 02
+ 
+%macro print 2
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, %1
+	mov rdx, %2
+	syscall
+%endmacro
+ 
+%macro read 2
+	mov rax, 0
+	mov rdi, 0
+	mov rsi, %1
+	mov rdx, %2
+	syscall
+%endmacro
+ 
+%macro exit 0
+	mov rax, 60
+	mov rdi, 0
+	syscall
+%endmacro
+ 
+section .text
+	global _start
+ 
+_start:
+ 
+	mov rsi, arr64
+	mov rcx, n
+	mov rbx, 0
+	mov rdx, 0
+ 
+next_num:
+	mov rax, [rsi]
+	shl rax, 1
+	jc negative
+ 
+positive:
+	inc rbx
+	jmp next
+ 
+negative:
+	inc rdx
+ 
+next:
+	add rsi, 8
+	dec rcx
+	jnz next_num
+ 
+	mov [p_cnt], rbx
+	mov [n_cnt], rdx
+ 
+	print pmsg, pmsg_len
+	mov rax, [p_cnt]
+	call disp_proc
+ 
+	print nmsg, nmsg_len
+	mov rax, [n_cnt]
+	call disp_proc
+ 
+	exit
+ 
+disp_proc:
+	mov rbx, 16
+	mov rcx, 2
+	mov rsi, char_ans+1
+ 
+cnt:
+	mov rdx, 0
+	div rbx
+	cmp dl, 09h
+	jbe add30
+	add dl, 07h
+ 
+add30:
+	add dl, 30h
+	mov [rsi], dl
+	dec rsi
+ 
+	dec rcx
+	jnz cnt
+	print char_ans, 2
+	ret
