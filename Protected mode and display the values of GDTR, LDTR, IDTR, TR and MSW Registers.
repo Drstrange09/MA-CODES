@@ -1,0 +1,125 @@
+section .data
+   msg1 db "Processor is in protected mode",10
+   msg1_len equ $-msg1
+ 
+   msg2 db "Processor is not in protected mode",10
+   msg2_len equ $-msg2
+ 
+   mgdt db "Value of GDTR: "
+   mgdt_len equ $-mgdt
+ 
+   mline db " ",10
+   mline_len equ $-mline
+ 
+   mldt db "Value of LDTR: "
+   mldt_len equ $-mldt
+ 
+   midt db "Value of IDTR: "
+   midt_len equ $-midt
+ 
+   mmsw db "Value of MSW: "
+   mmsw_len equ $-mmsw
+ 
+section .bss
+   LDTR resw 1
+   GDTR resw 3
+   MSW resw 1
+   IDTR resw 3
+   TR resw 1
+   char_ans resb 4
+ 
+%macro print 2
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, %1
+	mov rdx, %2
+	syscall
+%endmacro
+ 
+%macro read 2
+	mov rax, 0
+	mov rdi, 0
+	mov rsi, %1
+	mov rdx, %2
+	syscall
+%endmacro
+ 
+%macro exit 0
+	mov rax, 60
+	mov rdi, 0
+	syscall
+%endmacro
+ 
+section .text
+	global _start
+ 
+_start:
+   SMSW [MSW]
+   mov ax,[MSW]
+ 
+   shr ax,1
+   jc pmode
+ 
+   print msg2,msg2_len
+  
+pmode:
+   print msg1,msg1_len
+   jmp next
+ 
+next:
+   SGDT [GDTR]
+   SLDT [LDTR]
+   STR [TR]
+   SIDT [IDTR]
+   SMSW [MSW]
+ 
+   print mgdt,mgdt_len
+   mov ax,[GDTR+4]
+   call display
+ 
+   mov ax,[GDTR+2]
+   call display
+ 
+   mov ax,[GDTR]
+   call display
+ 
+   print mline,mline_len
+   print mldt,mldt_len
+ 
+   mov ax,[LDTR]
+   call display
+ 
+   print mline,mline_len
+   print mmsw,mmsw_len
+ 
+   mov ax,[MSW]
+   call display
+ 
+   exit
+ 
+display:
+	mov rbx, 16
+	mov rcx, 2
+	mov rsi, char_ans+1
+ 
+cnt:
+	mov rdx, 0
+	div rbx
+ 
+	cmp dl, 09h
+	jbe add30
+	add dl, 07h
+ 
+add30:
+	add dl, 30h
+	mov [rsi], dl
+ 
+	dec rsi
+	dec rcx
+ 
+	jnz cnt
+	print char_ans, 2
+	ret
+ 
+ 
+ 
