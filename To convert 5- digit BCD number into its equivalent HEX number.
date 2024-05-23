@@ -72,7 +72,7 @@ next:
 disp_proc:
 	mov rbx, 16
 	mov rcx, 4
-	mov rsi, char_ans+4
+	mov rsi, char_ans+3
  
 cnt:
 	mov rdx, 0
